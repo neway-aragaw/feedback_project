@@ -14,7 +14,7 @@ env:
 
 jobs:
   build-and-deploy:
-    name: Build, Push to ECR, Deploy to EKS
+    name: Build, Push to ECR
     runs-on: ubuntu-latest
 
     steps:
@@ -31,8 +31,7 @@ jobs:
       - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region $AWS_REGION | \
-          docker login --username AWS \
-            --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
 
       - name: Build Docker image
         working-directory: frontend
@@ -48,7 +47,5 @@ jobs:
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
 
-      # Optional: Deploy step using kubectl, Helm, or Argo CD
-      # - name: Deploy to EKS
-      #   run: |
-      #     kubectl apply -f frontend/k8s/deployment.yaml
+      # Optional: Deploy to EKS using kubectl or ArgoCD
+      # Add Helm/kubectl steps here later if needed
