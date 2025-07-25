@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
       - '*'
 
 env:
@@ -14,8 +15,8 @@ env:
   IMAGE_TAG: latest
 
 jobs:
-  build-and-deploy:
-    name: Build, Push to ECR, Deploy to EKS
+  build-and-push:
+    name: Build & Push Docker image to ECR
     runs-on: ubuntu-latest
 
     steps:
@@ -47,17 +48,3 @@ jobs:
       - name: Push Docker image to ECR
         run: |
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
-
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Update kubeconfig for EKS
-        run: |
-          aws eks update-kubeconfig --region us-west-2 --name my-cluster
-
-      - name: Deploy to EKS
-        run: |
-          kubectl apply -f k8s/frontend-deployment.yaml
-          kubectl apply -f k8s/frontend-service.yaml
