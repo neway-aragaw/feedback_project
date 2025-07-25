@@ -31,8 +31,10 @@ const FeedbackForm = () => {
     setSubmitting(true);
     setStatus('');
 
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
     try {
-      const response = await fetch('http://localhost:5000/api/feedback', {
+      const response = await fetch(`${apiUrl}/api/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
