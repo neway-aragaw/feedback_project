@@ -55,7 +55,7 @@ jobs:
 
       - name: Update kubeconfig for EKS
         run: |
-          aws eks update-kubeconfig --region $AWS_REGION --name feedback-cluster
+          aws eks update-kubeconfig --region $AWS_REGION --name my-cluster
 
       - name: Deploy to EKS
         run: |
