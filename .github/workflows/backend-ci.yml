@@ -1,4 +1,4 @@
-name: Backend CI/CD
+name: Backend CI/CD Pipeline
 
 on:
   push:
@@ -6,24 +6,26 @@ on:
       - main
     paths:
       - 'backend/**'
-      - '*'
+      - '.github/workflows/backend.yml'
 
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: feedback-backend
   IMAGE_TAG: latest
+  CLUSTER_NAME: my-cluster
+  DEPLOYMENT_NAMESPACE: default
 
 jobs:
-  build-and-push:
-    name: Build and Push Docker image to ECR
+  build-push-deploy:
+    name: Build, Push to ECR & Deploy to EKS
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -33,9 +35,23 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, Tag and Push Docker image
+      - name: Build, Tag, and Push Docker image
         run: |
           cd backend
           docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REPOSITORY:$IMAGE_TAG ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
           docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region us-west-2 --name $CLUSTER_NAME
+
+      - name: Deploy backend to EKS
+        run: |
+          kubectl apply -f backend/k8s/deployment.yaml
+          kubectl apply -f backend/k8s/service.yaml
